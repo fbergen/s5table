@@ -24,7 +24,6 @@ impl GCSFile {
     pub async fn new(bucket: &str, path: &str) -> GCSFile {
         let client = Client::default();
         let len = client.object().read(bucket, path).await.unwrap().size;
-        println!("LEN: {}", len);
         GCSFile {
             bucket: bucket.to_string(),
             path: path.to_string(),
@@ -36,7 +35,6 @@ impl GCSFile {
     pub async fn async_read_at(&self, off: i64, buf: &mut [u8]) -> Result<usize, Box<dyn Error>> {
         let client = Client::default();
         let len = buf.len();
-        println!("off {} , BUF LEN: {}", off, len);
 
         let resp = client
             .object()
@@ -48,7 +46,6 @@ impl GCSFile {
             )
             .await
             .unwrap();
-        println!("HERE");
 
         (&resp[..]).copy_to_slice(&mut buf[..resp.len()]);
 

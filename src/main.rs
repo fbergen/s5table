@@ -2,6 +2,7 @@ extern crate leveldb;
 
 use std::fs;
 use std::sync::Arc;
+use tokio::task;
 extern crate db_key as key;
 use crate::leveldb::compaction::Compaction;
 use crate::leveldb::iterator::Iterable;
@@ -95,17 +96,12 @@ async fn read_db() {
 
     // let f = S3File::new("flyvc", "fberge/test.sstable").await;
 
-    let mut buffer = [0; 10];
-    println!("{:?}", f.async_read_at(0, &mut buffer).await);
-    let mut buffer = [0; 59];
-    println!("{:?}", f.async_read_at(2083698776, &mut buffer).await);
-    // println!("{:?}", f.async_read_at(0, &mut buffer).await);
-    // println!("{:?}", f.async_read_at(0, &mut buffer).await);
-    // println!("{:?}", f.async_read_at(0, &mut buffer).await);
+    let res = task::spawn_blocking(move || {
+        let l = f.len as usize;
 
-    let l = f.len as usize;
-
-    let tr = read_table(Box::new(f), l).expect("Reading the table failed");
+        let tr = read_table(Box::new(f), l).expect("Reading the table failed");
+    })
+    .await;
 }
 
 async fn read_db_from_s3() {
