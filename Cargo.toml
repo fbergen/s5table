@@ -1,0 +1,30 @@
+[package]
+name = "s5table"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[patch.crates-io]
+# cloud-storage = { version = "0.11.0-rc.1", path = "../cloud-storage" }
+sstable = { path = "../sstable" }
+#leveldb = { path = "../leveldb" }
+
+[dependencies]
+leveldb = "0.8.6"
+tempdir = "0.3.7"
+db-key = "0.0.5"
+aws-config = "0.4.0"
+http = "0.2.6"
+aws-sdk-s3 = "0.4.0"
+tokio = { version = "1", features = ["full"] }
+bytes = "1"
+futures = "0.3"
+sstable = "0.10.0"
+percent-encoding = { version = "2",    default-features = false }
+serde =            { version = "1",    default-features = false, features = ["derive"] }
+serde_json =       { version = "1",    default-features = false }
+cloud-storage = { version = "0.11.0-rc.1" , git = "https://github.com/fbergen/cloud-storage-rs" }
+reqwest = { version = "0.11", default-features = false, features = ["json", "stream"] }
+
+
