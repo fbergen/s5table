@@ -45,14 +45,17 @@ fn get(table: &State<sstable::Table>, params: GetParam) -> Option<Vec<u8>> {
 async fn main() -> Result<(), rocket::Error> {
     println!("Reading sstable file");
 
-    // let file = GCSFile::new("githope-eu", "experimental/test.sstable").await;
-    let file = S3File::new("flyvc", "fberge/test.sstable").await;
+    let file = GCSFile::new("githope-eu", "experimental/test.sstable").await;
+    // let file = S3File::new("flyvc", "fberge/test.sstable").await;
     println!("Done Readng sstable file");
     let len = file.len as usize;
     let mut options = sstable::Options::default();
     options.filter_policy = Arc::new(Box::new(filter::NoFilterPolicy::new()));
 
-    let table = sstable::Table::new(options, Box::new(file), len).unwrap();
+    let table =
+        task::spawn_blocking(move || sstable::Table::new(options, Box::new(file), len).unwrap())
+            .await
+            .unwrap();
 
     let allowed_origins = AllowedOrigins::all();
 

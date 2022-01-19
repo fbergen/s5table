@@ -20,8 +20,8 @@ percent-encoding = { version = "2",    default-features = false }
 serde =            { version = "1",    default-features = false, features = ["derive"] }
 serde_json =       { version = "1",    default-features = false }
 serde_derive = "1.0"
-cloud-storage = { version = "0.11.0-rc.1" , git = "https://github.com/fbergen/cloud-storage-rs" }
-#cloud-storage = { version = "0.11.0-rc.1", path = "../cloud-storage-rs" }
+#cloud-storage = { version = "0.11.0-rc.1" , git = "https://github.com/fbergen/cloud-storage-rs" }
+cloud-storage = { version = "0.11.0-rc.1", path = "../cloud-storage-rs" }
 reqwest = { version = "0.11", default-features = false, features = ["json", "stream"] }
 rocket = { git="https://github.com/SergioBenitez/Rocket.git", default-features = false }
 rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", tag = "v0.5.2" }
