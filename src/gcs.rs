@@ -1,29 +1,30 @@
 use bytes::Buf;
 use cloud_storage::Client;
-use cloud_storage::GoogleErrorResponse;
-use cloud_storage::Object;
 use futures::executor::block_on;
-use percent_encoding::AsciiSet;
 use sstable::RandomAccess;
 use std::error::Error;
 use std::io;
 use std::io::{Read, Seek};
-use std::sync::Arc;
 
 pub struct GCSFile {
     bucket: String,
     path: String,
     pos: i64,
     pub len: i64,
-    //  client: Client,
+    // client: Client,
     //  Ugh... can't have client as it's not thread safe...
     //  For MVP, simply recreate the client all the time.
 }
 
 impl GCSFile {
     pub async fn new(bucket: &str, path: &str) -> GCSFile {
-        let client = Client::default();
-        let len = client.object().read(bucket, path).await.unwrap().size;
+        // let client = Client::default();
+        let len = Client::default()
+            .object()
+            .read(bucket, path)
+            .await
+            .unwrap()
+            .size;
         GCSFile {
             bucket: bucket.to_string(),
             path: path.to_string(),

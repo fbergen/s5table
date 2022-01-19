@@ -1,18 +1,19 @@
 extern crate leveldb;
 
-use std::fs;
-use std::sync::Arc;
-use tokio::task;
 extern crate db_key as key;
 use crate::leveldb::compaction::Compaction;
 use crate::leveldb::iterator::Iterable;
 use leveldb::database::Database;
 use leveldb::kv::KV;
 use leveldb::options::{Options, ReadOptions, WriteOptions};
+use serde::{Deserialize, Serialize};
 use sstable::*;
+use std::fs;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::Arc;
+use tokio::task;
 
 mod s3;
 use crate::s3::S3File;
@@ -20,9 +21,6 @@ mod gcs;
 use crate::gcs::GCSFile;
 
 use db_key::Key;
-
-// mod table;
-//  use crate::table::Table;
 
 #[derive(Debug)]
 struct MyKey(String);
