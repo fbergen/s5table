@@ -5,7 +5,6 @@ use sstable::RandomAccess;
 use std::error::Error;
 use std::io;
 use std::io::{Read, Seek};
-use tokio::runtime::Handle;
 
 pub struct GCSFile {
     bucket: String,
@@ -81,10 +80,7 @@ impl Seek for GCSFile {
 use sstable::Status;
 impl RandomAccess for GCSFile {
     fn read_at(&self, off: usize, dst: &mut [u8]) -> std::result::Result<usize, Status> {
-        let handle = Handle::current();
         let future = self.async_read_at(off as i64, dst);
-        handle
-            .block_on(future)
-            .map_err(|_e| Status::from(io::Error::from_raw_os_error(22)))
+        block_on(future).map_err(|_e| Status::from(io::Error::from_raw_os_error(22)))
     }
 }
