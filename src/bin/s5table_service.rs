@@ -8,10 +8,10 @@ use rocket::{get, routes};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use sstable::filter;
 use std::sync::Arc;
-use tokio::runtime::Handle;
 use tokio::task;
 
 extern crate s5table;
+#[allow(unused_imports)]
 use s5table::gcs::GCSFile;
 #[allow(unused_imports)]
 use s5table::s3::S3File;
@@ -21,28 +21,16 @@ struct GetParam {
     key: Option<String>,
 }
 
-async fn get_table_entry(
-    table: &sstable::Table,
-    key: String,
-) -> Result<Option<Vec<u8>>, sstable::Status> {
-    table.get(key.as_bytes())
-}
-
-//fn get(table: State<sstable::Table >, params: LenientForm<GetParam>) -> Option<Vec<u8>> {
 #[get("/get?<params..>")]
-fn get(table: &State<sstable::Table>, params: GetParam) -> Option<Vec<u8>> {
+async fn get(table: &State<sstable::Table>, params: GetParam) -> Option<Vec<u8>> {
     let k = params.key?;
     println!("Get key {:?}", k);
 
-    let res = task::block_in_place(move || {
-        let handle = Handle::current();
-        handle.block_on(get_table_entry(table, k))
-    });
-    res.unwrap()
+    task::block_in_place(move || table.get(k.as_bytes())).unwrap()
 }
 
-#[rocket::main]
-async fn main() -> Result<(), rocket::Error> {
+#[launch]
+async fn rocket() -> _ {
     println!("Reading sstable file");
 
     let file = GCSFile::new("githope-eu", "experimental/test.sstable").await;
@@ -72,8 +60,4 @@ async fn main() -> Result<(), rocket::Error> {
         //.attach(cors)
         .manage(table)
         .mount("/", routes![get])
-        .ignite()
-        .await?
-        .launch()
-        .await
 }

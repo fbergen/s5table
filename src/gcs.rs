@@ -11,33 +11,32 @@ pub struct GCSFile {
     path: String,
     pos: i64,
     pub len: i64,
-    // client: Client,
+    client: Client,
     //  Ugh... can't have client as it's not thread safe...
     //  For MVP, simply recreate the client all the time.
+    //  Update: Patched cloud-storate-rs to force client to be Send, unclear if fully OK at this
+    //  point
 }
 
 impl GCSFile {
     pub async fn new(bucket: &str, path: &str) -> GCSFile {
-        // let client = Client::default();
-        let len = Client::default()
-            .object()
-            .read(bucket, path)
-            .await
-            .unwrap()
-            .size;
+        let client = Client::default();
+        let len = client.object().read(bucket, path).await.unwrap().size;
         GCSFile {
             bucket: bucket.to_string(),
             path: path.to_string(),
             pos: 0,
             len: len as i64,
+            client,
         }
     }
 
     pub async fn async_read_at(&self, off: i64, buf: &mut [u8]) -> Result<usize, Box<dyn Error>> {
-        let client = Client::default();
         let len = buf.len();
+        println!("async_read_at off: {} len: {}", off, len);
 
-        let resp = client
+        let resp = self
+            .client
             .object()
             .download_with_range(
                 &self.bucket,
