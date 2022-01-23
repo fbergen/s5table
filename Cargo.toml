@@ -6,31 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-leveldb = "0.8.6"
-tempdir = "0.3.7"
-db-key = "0.0.5"
 aws-config = "0.4.0"
 http = "0.2.6"
 aws-sdk-s3 = "0.4.0"
 tokio = { version = "1", features = ["full"] }
 bytes = "1"
 futures = "0.3"
-sstable = "0.10.0"
-percent-encoding = { version = "2",    default-features = false }
-serde =            { version = "1",    default-features = false, features = ["derive"] }
-serde_json =       { version = "1",    default-features = false }
-serde_derive = "1.0"
-cloud-storage = { version = "0.11.0-rc.1" , git = "https://github.com/fbergen/cloud-storage-rs" }
-# cloud-storage = { version = "0.11.0-rc.1", path = "../cloud-storage-rs" }
-reqwest = { version = "0.11", default-features = false, features = ["json", "stream"] }
-rocket = { git="https://github.com/SergioBenitez/Rocket.git", default-features = false }
-rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", tag = "v0.5.2" }
-
-
-[patch.crates-io]
 sstable = { git = "https://github.com/fbergen/sstable", branch="master" }
-#leveldb = { path = "../leveldb" }
-# rocket = { git = 'https://github.com/SergioBenitez/Rocket', branch = "master" }
-# rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
-
-
+cloud-storage = { version = "0.11.0-rc.1" , git = "https://github.com/fbergen/cloud-storage-rs" }
+rocket = {version = "0.5.0-rc.1"}
+rocket_cors = "0.6.0-alpha1"
