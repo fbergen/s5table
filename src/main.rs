@@ -5,6 +5,8 @@ use rocket::http::Method;
 use rocket::{get, launch, routes, State};
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use sstable::filter;
+use sstable::RandomAccess;
+use std::env;
 use std::sync::Arc;
 use tokio::task;
 
@@ -27,22 +29,36 @@ async fn get(table: &State<sstable::Table>, params: GetParam) -> Option<Vec<u8>>
     task::block_in_place(move || table.get(k.as_bytes())).unwrap()
 }
 
+async fn get_file(path: &str) -> (Box<dyn RandomAccess>, usize) {
+    match path.starts_with("gs://") {
+        true => {
+            let (bucket, dir) = path.strip_prefix("gs://").unwrap().split_once("/").unwrap();
+            let f = GCSFile::new(bucket, dir).await;
+            let l = f.len as usize;
+            (Box::new(f), l)
+        }
+        false => {
+            let (bucket, dir) = path.strip_prefix("s3://").unwrap().split_once("/").unwrap();
+            let f = S3File::new(bucket, dir).await;
+            let l = f.len as usize;
+            (Box::new(f), l)
+        }
+    }
+}
+
 #[launch]
 async fn rocket() -> _ {
     println!("Reading sstable file");
-    // let file_location = env::var("SSTABLE_FILE").unwrap().expect("Need to set SSTABLE_FILE env variable");
+    let file_location = env::var("SSTABLE_FILE").expect("Need to set SSTABLE_FILE env variable");
+    let (file, len) = get_file(&file_location).await;
 
-    let file = GCSFile::new("githope-eu", "experimental/test.sstable").await;
-    // let file = S3File::new("flyvc", "fberge/test.sstable").await;
     println!("Done Readng sstable file");
-    let len = file.len as usize;
     let mut options = sstable::Options::default();
     options.filter_policy = Arc::new(Box::new(filter::NoFilterPolicy::new()));
 
-    let table =
-        task::spawn_blocking(move || sstable::Table::new(options, Box::new(file), len).unwrap())
-            .await
-            .unwrap();
+    let table = task::spawn_blocking(move || sstable::Table::new(options, file, len).unwrap())
+        .await
+        .unwrap();
 
     let allowed_origins = AllowedOrigins::all();
 
