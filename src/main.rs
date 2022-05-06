@@ -1,5 +1,9 @@
 extern crate rocket;
 
+use opentelemetry::sdk;
+use opentelemetry::sdk::export::trace::stdout;
+use opentelemetry::trace::TracerProvider;
+
 use rocket::form::FromForm;
 use rocket::http::Method;
 use rocket::{get, launch, routes, State};
@@ -9,6 +13,9 @@ use sstable::RandomAccess;
 use std::env;
 use std::sync::Arc;
 use tokio::task;
+use tracing::{debug, instrument};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::Registry;
 
 extern crate s5table;
 #[allow(unused_imports)]
@@ -22,6 +29,7 @@ struct GetParam {
 }
 
 #[get("/get?<params..>")]
+#[instrument(skip(table))]
 async fn get(table: &State<sstable::Table>, params: GetParam) -> Option<Vec<u8>> {
     let k = params.key?;
     println!("Get key {:?}", k);
@@ -48,8 +56,41 @@ async fn get_file(path: &str) -> (Box<dyn RandomAccess>, usize) {
 
 #[launch]
 async fn rocket() -> _ {
-    println!("Reading sstable file");
+    // Install a new OpenTelemetry trace pipeline
+    // let tracer = stdout::new_pipeline().install_simple();
+    let exporter = opentelemetry_stackdriver::StackDriverExporter::builder()
+        .build(
+            opentelemetry_stackdriver::YupAuthorizer::new(
+                "./osstracker-3177a-c4f1beab768a.json2",
+                None,
+            )
+            .await
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    // Build a provider from the jaeger exporter that always samples.
+    let provider = sdk::trace::TracerProvider::builder()
+        .with_simple_exporter(exporter.0)
+        .with_config(sdk::trace::Config::default().with_sampler(sdk::trace::Sampler::AlwaysOn))
+        .build();
+
+    // Get a tracer from the provider for a component
+    let tracer = provider.tracer("component-name");
+
+    // Create a tracing layer with the configured tracer
+    //let telemetry = tracing_opentelemetry::OpenTelemetryLayer::new(tracer);
+    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+
+    // Use the tracing subscriber `Registry`, or any other subscriber
+    // that impls `LookupSpan`
+    let subscriber = Registry::default().with(telemetry);
+
+    tracing::subscriber::set_global_default(subscriber).expect("Could not set up global logger");
+
     let file_location = env::var("SSTABLE_FILE").expect("Need to set SSTABLE_FILE env variable");
+    println!("Reading sstable file: {}", file_location);
     let (file, len) = get_file(&file_location).await;
 
     println!("Done Readng sstable file");

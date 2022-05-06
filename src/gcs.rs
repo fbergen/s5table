@@ -5,6 +5,7 @@ use sstable::RandomAccess;
 use std::error::Error;
 use std::io;
 use std::io::{Read, Seek};
+use tracing::{debug, instrument};
 
 pub struct GCSFile {
     bucket: String,
@@ -31,9 +32,10 @@ impl GCSFile {
         }
     }
 
+    #[instrument(skip(self, buf))]
     pub async fn async_read_at(&self, off: i64, buf: &mut [u8]) -> Result<usize, Box<dyn Error>> {
         let len = buf.len();
-        println!("async_read_at off: {} len: {}", off, len);
+        debug!("async_read_at off: {} len: {}", off, len);
 
         let resp = self
             .client
